@@ -70,20 +70,29 @@ try_add_core_sector_size_mismatch = [
     r"or try other device with the same logical sector size as core device\."
 ]
 
+partition_not_suitable_for_array = [
+    r"\S+ is not suitable for this array"
+]
 
-def check_stderr_msg(output: Output, expected_messages):
-    return __check_string_msg(output.stderr, expected_messages)
+device_or_resource_busy = [
+    r"cannot open \S+: Device or resource busy"
+]
 
 
-def check_stdout_msg(output: Output, expected_messages):
-    return __check_string_msg(output.stdout, expected_messages)
+def check_stderr_msg(output: Output, expected_messages, error_info=True):
+    return __check_string_msg(output.stderr, expected_messages, error_info)
 
 
-def __check_string_msg(text: str, expected_messages):
+def check_stdout_msg(output: Output, expected_messages, error_info=True):
+    return __check_string_msg(output.stdout, expected_messages, error_info)
+
+
+def __check_string_msg(text: str, expected_messages, error_info=True):
     msg_ok = True
     for msg in expected_messages:
         matches = re.search(msg, text)
         if not matches:
-            TestRun.LOGGER.error(f"Message is incorrect, expected: {msg}\n actual: {text}.")
+            if error_info:
+                TestRun.LOGGER.error(f"Message is incorrect, expected: {msg}\n actual: {text}.")
             msg_ok = False
     return msg_ok
