@@ -6,7 +6,6 @@
 from api.cas.casadm_parser import *
 from api.cas.cli import *
 from api.cas.statistics import CacheStats, CacheIoClassStats
-from storage_devices.device import Device
 from test_utils.os_utils import *
 
 
@@ -65,6 +64,22 @@ class Cache:
     def get_status(self):
         status = self.get_statistics().config_stats.status.replace(' ', '_').lower()
         return CacheStatus[status]
+
+    @staticmethod
+    def get_metadata_max_size(cache_size: Size, cache_line_size: Size, number_of_cores=4096):
+        """Get memory size according to requirement """
+        constant = int(Size(100, Unit.MebiByte))
+        cache_size_value = int(cache_size.value)
+        cache_line_size_value = int(cache_line_size.value)
+
+        cache_line_count = cache_size_value / cache_line_size_value
+        per_cache_line_metadata = 68 + 2 * cache_line_size_value / number_of_cores
+        amount_of_dram = constant + cache_line_count * per_cache_line_metadata
+
+        # maximum value is 110% of calculated size
+        metadata_max_size = 1.10 * amount_of_dram
+
+        return Size(metadata_max_size)
 
     @property
     def size(self):
