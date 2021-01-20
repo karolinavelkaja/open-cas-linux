@@ -11,6 +11,8 @@ from api.cas.cache_config import CacheLineSize, CacheMode, SeqCutOffPolicy, Clea
 from api.cas.core import Core
 from core.test_run import TestRun
 from storage_devices.device import Device
+from storage_devices.lvm import Lvm
+from test_utils.disk_finder import resolve_to_by_id_link
 from test_utils.os_utils import reload_kernel_module
 from test_utils.output import CmdException
 from test_utils.size import Size, Unit
@@ -52,12 +54,16 @@ def stop_cache(cache_id: int, no_data_flush: bool = False, shortcut: bool = Fals
 
 def add_core(cache: Cache, core_dev: Device, core_id: int = None, shortcut: bool = False):
     _core_id = None if core_id is None else str(core_id)
+    if isinstance(core_dev, Lvm):
+        core_dev_path = resolve_to_by_id_link(core_dev.path)
+    else:
+        core_dev_path = core_dev.path
     output = TestRun.executor.run(
-        add_core_cmd(cache_id=str(cache.cache_id), core_dev=core_dev.path,
+        add_core_cmd(cache_id=str(cache.cache_id), core_dev=core_dev_path,
                      core_id=_core_id, shortcut=shortcut))
     if output.exit_code != 0:
         raise CmdException("Failed to add core.", output)
-    core = Core(core_dev.path, cache.cache_id)
+    core = Core(core_dev_path, cache.cache_id)
     return core
 
 

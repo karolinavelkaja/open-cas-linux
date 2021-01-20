@@ -7,6 +7,7 @@ import pytest
 
 from core.test_run import TestRun
 from storage_devices.disk import DiskType, DiskTypeSet
+from storage_devices.lvm import Lvm
 from storage_devices.raid import Raid, RaidConfiguration, MetadataVariant, Level
 from test_tools import fs_utils
 from test_tools.disk_utils import Filesystem
@@ -116,3 +117,39 @@ def test_create_example_files():
             TestRun.LOGGER.info(f"Item {str(item)} - {type(item).__name__}")
     with TestRun.step("Remove file"):
         fs_utils.remove(file1.full_path, True)
+
+
+@pytest.mark.require_disk("cache1", DiskTypeSet([DiskType.hdd, DiskType.hdd4k, DiskType.sata]))
+@pytest.mark.require_disk("cache2", DiskTypeSet([DiskType.hdd, DiskType.hdd4k, DiskType.sata]))
+def test_lvm_example():
+    """
+        title: Example test using LVM API.
+        description: Create and discover Logical Volumes.
+        pass_criteria:
+          - LVMs created.
+          - LVMs discovered.
+    """
+    with TestRun.step("Prepare"):
+        disk_1 = TestRun.disks['cache1']
+        disk_1.create_partitions([Size(8, Unit.GiB)] * 2)
+        test_disk_1 = disk_1.partitions[0]
+        test_disk_3 = disk_1.partitions[1]
+
+        disk_2 = TestRun.disks['cache2']
+        disk_2.create_partitions([Size(8, Unit.GiB)] * 2)
+        test_disk_2 = disk_2.partitions[0]
+        test_disk_4 = disk_2.partitions[1]
+
+    with TestRun.step("Create LVMs"):
+        lvm1 = Lvm.create(Size(5, Unit.GiB), [test_disk_1, test_disk_2], "lvm5")
+        lvm2 = Lvm.create(70, [test_disk_3, test_disk_4], "lvm7")
+
+    with TestRun.step("Discover LVMs"):
+        lvms = Lvm.discover()
+
+    with TestRun.step("Check if created LVMs were discovered"):
+        for lvm in (lvm1, lvm2):
+            if lvm not in lvms:
+                TestRun.LOGGER.error(f"Created LVM {lvm.volume_name} not discovered in system!")
+
+        TestRun.LOGGER.info(f"Created LVMs present in the system.")

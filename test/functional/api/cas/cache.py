@@ -6,7 +6,6 @@
 from api.cas.casadm_parser import *
 from api.cas.cli import *
 from api.cas.statistics import CacheStats, CacheIoClassStats
-from storage_devices.device import Device
 from test_utils.os_utils import *
 
 

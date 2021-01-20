@@ -19,6 +19,7 @@ from api.cas import installer
 from api.cas import casadm
 from api.cas import git
 from storage_devices.raid import Raid
+from storage_devices.lvm import Lvm
 from test_utils.os_utils import Udev, kill_all_io
 from test_tools.disk_utils import PartitionTable, create_partition_table
 from test_tools.device_mapper import DeviceMapper
@@ -196,6 +197,9 @@ def base_prepare(item):
                 raid.stop()
                 for device in raid.array_devices:
                     Mdadm.zero_superblock(device.path)
+
+        if Lvm.discover():
+            Lvm.remove_all()
 
         for disk in TestRun.dut.disks:
             disk.umount_all_partitions()
