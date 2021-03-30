@@ -5,6 +5,7 @@
 
 import time
 from random import shuffle
+
 import pytest
 
 from api.cas import casadm, cli, cli_messages
@@ -69,6 +70,7 @@ def test_attach_core_to_incomplete_cache_volume():
         cache.stop()
 
     with TestRun.step("Unplug core device."):
+        core_dev_id = core.core_device.get_device_id()
         plug_device.unplug()
 
     with TestRun.step("Load cache."):
@@ -76,7 +78,7 @@ def test_attach_core_to_incomplete_cache_volume():
 
     with TestRun.step("Check if there is no CAS device in /dev and core is in inactive status."):
         core.check_if_is_present_in_os(False)
-        if core.get_status() != CoreStatus.inactive:
+        if core.get_status(core_dev_id) != CoreStatus.inactive:
             TestRun.fail("Core should be in inactive state.")
 
     with TestRun.step("Plug core device."):
